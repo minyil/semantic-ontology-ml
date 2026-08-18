@@ -70,19 +70,19 @@ class OntologyDiagramTests(unittest.TestCase):
         output = MODULE.mermaid(SNAPSHOT, self.report, detail="compact", direction="TB")
         self.assertIn("flowchart TB", output)
         self.assertIn("Order &quot;Line&quot;", output)
-        self.assertIn("target: amount [declared]", output)
-        self.assertIn("time: observed_at [declared]", output)
-        self.assertIn("sensitive?: sex [proposed]", output)
-        self.assertIn("owned &#124; by [proposed]", output)
+        self.assertIn("目標: amount [已宣告]", output)
+        self.assertIn("時間: observed_at [已宣告]", output)
+        self.assertIn("敏感?: sex [建議]", output)
+        self.assertIn("owned &#124; by [建議]", output)
         self.assertIn("N:1", output)
         self.assertIn("customer_id→customer_id", output)
         self.assertIn("linkStyle 0", output)
 
     def test_mermaid_fields_lists_types_and_markers(self) -> None:
         output = MODULE.mermaid(SNAPSHOT, self.report, detail="fields")
-        self.assertIn("amount: double [target:declared]", output)
-        self.assertIn("observed_at: timestamp [time:declared]", output)
-        self.assertIn("sex: string [sensitive?:proposed]", output)
+        self.assertIn("amount: double [目標:已宣告]", output)
+        self.assertIn("observed_at: timestamp [時間:已宣告]", output)
+        self.assertIn("sex: string [敏感?:建議]", output)
 
     def test_dot_is_dependency_free_graphviz_source(self) -> None:
         output = MODULE.dot(SNAPSHOT, self.report, detail="compact", direction="RL")
@@ -90,6 +90,21 @@ class OntologyDiagramTests(unittest.TestCase):
         self.assertIn('Order \\"Line\\"', output)
         self.assertIn('style="dashed"', output)
         self.assertIn("N0 -> N1", output)
+
+    def test_english_override_preserves_english_diagram_labels(self) -> None:
+        output = MODULE.mermaid(
+            SNAPSHOT, self.report, detail="compact", direction="LR", language="en"
+        )
+        self.assertIn("ontology diagram", output)
+        self.assertIn("target: amount [declared]", output)
+        self.assertIn("owned &#124; by [proposed]", output)
+
+    def test_unnamed_model_uses_localized_fallback_title(self) -> None:
+        unnamed = {**SNAPSHOT, "semantic_model": {}}
+        report = MODULE.profile(unnamed)
+        output = MODULE.mermaid(unnamed, report)
+        self.assertIn("# 本體模型 本體語意圖", output)
+        self.assertNotIn("# Ontology", output)
 
     def test_explicit_sensitive_role_enters_review_queue(self) -> None:
         self.assertIn(

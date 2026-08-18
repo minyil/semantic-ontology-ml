@@ -44,6 +44,38 @@ OUTCOME_HINTS = re.compile(
     r"outcome|post[_ -]?event|resolved|target",
     re.I,
 )
+DEFAULT_LANGUAGE = "zh-Hant-TW"
+LANGUAGES = {DEFAULT_LANGUAGE, "en"}
+DIAGRAM_TEXT = {
+    "zh-Hant-TW": {
+        "diagram_title": "本體語意圖",
+        "legend": "標記代表語意角色；`敏感?` 是待審查候選。關係標籤顯示名稱、證據、基數與連接鍵。",
+        "no_fields": "（無欄位）",
+        "target": "目標",
+        "time": "時間",
+        "sensitive?": "敏感?",
+        "unnamed_relation": "未命名關係",
+    },
+    "en": {
+        "diagram_title": "ontology diagram",
+        "legend": "Markers are semantic roles; `sensitive?` is a review candidate. Relation labels show name, evidence, cardinality, and join keys.",
+        "no_fields": "(no fields)",
+        "target": "target",
+        "time": "time",
+        "sensitive?": "sensitive?",
+        "unnamed_relation": "unnamed relation",
+    },
+}
+EVIDENCE_LABELS = {
+    "zh-Hant-TW": {
+        "declared": "已宣告",
+        "observed": "已觀測",
+        "inferred": "推論",
+        "proposed": "建議",
+        "unspecified": "未指定",
+    },
+    "en": {},
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -53,6 +85,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("input", help="Snapshot JSON path, or '-' for stdin")
     parser.add_argument(
         "--format", choices=("json", "markdown", "mermaid", "dot"), default="markdown"
+    )
+    parser.add_argument(
+        "--language",
+        choices=tuple(sorted(LANGUAGES)),
+        default=DEFAULT_LANGUAGE,
+        help="User-facing diagram language; defaults to Traditional Chinese",
     )
     parser.add_argument(
         "--diagram-detail",
@@ -598,31 +636,41 @@ def join_label(relation: dict[str, Any]) -> str:
     return ", ".join(parts)
 
 
-def diagram_lines(entity: dict[str, Any], detail: str) -> list[str]:
+def localized_marker(value: str, language: str) -> str:
+    return DIAGRAM_TEXT[language].get(value, value)
+
+
+def localized_evidence(value: str, language: str) -> str:
+    return EVIDENCE_LABELS[language].get(value, value)
+
+
+def diagram_lines(
+    entity: dict[str, Any], detail: str, language: str = DEFAULT_LANGUAGE
+) -> list[str]:
     lines = [entity["name"]]
     if detail == "fields":
         for field in entity["fields"]:
             markers = " ".join(
-                f"[{item}:{field['marker_evidence'][item]}]"
+                f"[{localized_marker(item, language)}:{localized_evidence(field['marker_evidence'][item], language)}]"
                 if item in field["marker_evidence"]
-                else f"[{item}]"
+                else f"[{localized_marker(item, language)}]"
                 for item in field["markers"]
             )
             suffix = f" {markers}" if markers else ""
             lines.append(f"{field['name']}: {field['physical_type']}{suffix}")
         if not entity["fields"]:
-            lines.append("(no fields)")
+            lines.append(DIAGRAM_TEXT[language]["no_fields"])
         return lines
     if entity["primary_key"]:
         lines.append("PK: " + ", ".join(entity["primary_key"]))
-    for marker, label in (("target", "target"), ("time", "time"), ("sensitive?", "sensitive?")):
+    for marker in ("target", "time", "sensitive?"):
         names = [
-            f"{field['name']} [{field['marker_evidence'][marker]}]"
+            f"{field['name']} [{localized_evidence(field['marker_evidence'][marker], language)}]"
             for field in entity["fields"]
             if marker in field["markers"]
         ]
         if names:
-            lines.append(f"{label}: {', '.join(names)}")
+            lines.append(f"{localized_marker(marker, language)}: {', '.join(names)}")
     return lines
 
 
@@ -631,21 +679,29 @@ def mermaid_escape(value: str) -> str:
 
 
 def mermaid(
-    snapshot: dict[str, Any], report: dict[str, Any], detail: str = "compact", direction: str = "LR"
+    snapshot: dict[str, Any],
+    report: dict[str, Any],
+    detail: str = "compact",
+    direction: str = "LR",
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     entities = diagram_entities(snapshot, report)
     ids = {entity["name"]: entity["id"] for entity in entities}
-    model_name = report["semantic_model"].get("name") or "Ontology"
+    model_name = report["semantic_model"].get("name") or (
+        "本體模型" if language == DEFAULT_LANGUAGE else "Ontology"
+    )
     lines = [
-        f"# {model_name} ontology diagram",
+        f"# {model_name} {DIAGRAM_TEXT[language]['diagram_title']}",
         "",
-        "Markers are semantic roles; `sensitive?` is a review candidate. Relation labels show name, evidence, cardinality, and join keys.",
+        DIAGRAM_TEXT[language]["legend"],
         "",
         "```mermaid",
         f"flowchart {direction}",
     ]
     for entity in entities:
-        label = "<br/>".join(mermaid_escape(item) for item in diagram_lines(entity, detail))
+        label = "<br/>".join(
+            mermaid_escape(item) for item in diagram_lines(entity, detail, language)
+        )
         lines.append(f'    {entity["id"]}["{label}"]')
     styled_edges: list[tuple[int, str]] = []
     edge_index = 0
@@ -654,9 +710,12 @@ def mermaid(
         target = relation.get("target_entity", relation.get("target_object_type"))
         if source not in ids or target not in ids:
             continue
-        name = api_name(relation) or "unnamed relation"
+        name = api_name(relation) or DIAGRAM_TEXT[language]["unnamed_relation"]
         evidence = evidence_label(relation)
-        parts = [f"{name} [{evidence}]", cardinality_label(relation)]
+        parts = [
+            f"{name} [{localized_evidence(evidence, language)}]",
+            cardinality_label(relation),
+        ]
         joins = join_label(relation)
         if joins:
             parts.append(joins)
@@ -696,19 +755,25 @@ def dot_escape(value: str) -> str:
 
 
 def dot(
-    snapshot: dict[str, Any], report: dict[str, Any], detail: str = "compact", direction: str = "LR"
+    snapshot: dict[str, Any],
+    report: dict[str, Any],
+    detail: str = "compact",
+    direction: str = "LR",
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     entities = diagram_entities(snapshot, report)
     ids = {entity["name"]: entity["id"] for entity in entities}
-    model_name = report["semantic_model"].get("name") or "Ontology"
+    model_name = report["semantic_model"].get("name") or (
+        "本體模型" if language == DEFAULT_LANGUAGE else "Ontology"
+    )
     lines = [
         f'digraph "{dot_escape(model_name)}" {{',
-        f"  graph [rankdir={direction}, labelloc=t, label=\"{dot_escape(model_name)} ontology\"];",
+        f"  graph [rankdir={direction}, labelloc=t, label=\"{dot_escape(model_name)} {DIAGRAM_TEXT[language]['diagram_title']}\"];",
         '  node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#f8fafc", color="#475569"];',
         '  edge [fontname="Helvetica", color="#475569"];',
     ]
     for entity in entities:
-        label = dot_escape("\n".join(diagram_lines(entity, detail)))
+        label = dot_escape("\n".join(diagram_lines(entity, detail, language)))
         attributes = [f'label="{label}"']
         if entity["has_target"] and entity["has_sensitive"]:
             attributes.extend(['fillcolor="#fff1f2"', 'color="#9f1239"', "penwidth=3"])
@@ -722,9 +787,12 @@ def dot(
         target = relation.get("target_entity", relation.get("target_object_type"))
         if source not in ids or target not in ids:
             continue
-        name = api_name(relation) or "unnamed relation"
+        name = api_name(relation) or DIAGRAM_TEXT[language]["unnamed_relation"]
         evidence = evidence_label(relation)
-        parts = [f"{name} [{evidence}]", cardinality_label(relation)]
+        parts = [
+            f"{name} [{localized_evidence(evidence, language)}]",
+            cardinality_label(relation),
+        ]
         joins = join_label(relation)
         if joins:
             parts.append(joins)
@@ -752,9 +820,21 @@ def main() -> int:
     if args.format == "markdown":
         output = markdown(report)
     elif args.format == "mermaid":
-        output = mermaid(snapshot, report, args.diagram_detail, args.diagram_direction)
+        output = mermaid(
+            snapshot,
+            report,
+            args.diagram_detail,
+            args.diagram_direction,
+            args.language,
+        )
     elif args.format == "dot":
-        output = dot(snapshot, report, args.diagram_detail, args.diagram_direction)
+        output = dot(
+            snapshot,
+            report,
+            args.diagram_detail,
+            args.diagram_direction,
+            args.language,
+        )
     if args.output:
         Path(args.output).write_text(output, encoding="utf-8")
     else:

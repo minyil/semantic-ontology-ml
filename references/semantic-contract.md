@@ -117,3 +117,12 @@ Feature validity is governed by availability time, not merely event time. Record
 - **Palantir:** object types become entity types, properties become fields, link types become relations, and API names/RIDs remain `source_id`; actions/functions stay in adapter-specific operational metadata.
 
 Legacy snapshots using `object_types`/`properties`/`link_types` remain accepted by `scripts/profile_ontology.py`; new snapshots should use `entity_types`/`fields`/`relations`.
+
+## Task-semantic views
+
+Keep the canonical contract stable and source-oriented. Store process groupings, statistical associations, analytical lineage, temporal projections, and decision hypotheses as sibling semantic-view artifacts defined in `diagram-routing.md`.
+
+- Reference canonical entities and fields by normalized name.
+- Keep inferred and proposed edges outside canonical `relations`.
+- Attach metric, sample, and scope support to observed associations.
+- Version or hash each view against the canonical ontology snapshot so a diagram can be reproduced without becoming source truth.
