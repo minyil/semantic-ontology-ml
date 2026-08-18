@@ -1,0 +1,4 @@
+interface:
+  display_name: "Semantic Ontology ML"
+  short_description: "Ontology diagrams and leakage-safe semantic ML"
+  default_prompt: "Use $semantic-ontology-ml to infer dataset semantics, render the ontology graph, and build leakage-safe analyses or models."
