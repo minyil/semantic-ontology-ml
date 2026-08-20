@@ -1,11 +1,11 @@
 ---
 name: semantic-ontology-ml
-description: Infer and validate dataset semantics, normalize a provider-neutral ontology, automatically route structural, semantic-role, process, temporal, analytical, statistical, decision, or relational ontology views, and use meaning to drive leakage-safe analysis and modeling. Use for ontology or process-semantic diagrams; CSV, JSON, Parquet, DataFrame-like, time-series, panel, event, relational, graph, numeric, categorical, boolean, datetime, or text data; no-target exploration, single-target prediction, multi-output or multilabel learning, multitask learning, constrained multi-objective optimization; or Palantir Foundry, LinkML, RDF, SQL catalog, and hand-authored metadata adapters.
+description: Infer and validate dataset semantics, normalize a provider-neutral ontology, automatically route structural, semantic-role, process, temporal, analytical, statistical, decision, or relational views, render evidence-labeled domain-knowledge graphs, and use meaning to drive leakage-safe analysis and modeling. Use for ontology diagrams, process or mechanism maps, anomaly knowledge graphs; CSV, JSON, Parquet, DataFrame-like, time-series, panel, event, relational, graph, numeric, categorical, boolean, datetime, or text data; no-target exploration, prediction, multi-output or multilabel learning, multitask learning, multi-objective optimization; or Palantir Foundry, LinkML, RDF, SQL catalog, and hand-authored metadata adapters.
 ---
 
 # Semantic Ontology ML
 
-Use ontology as the semantic control plane for analysis. First discover what rows, fields, times, entities, events, relationships, units, and outcomes mean. Then compile those meanings into valid analysis and modeling choices.
+Use ontology as the semantic control plane for analysis. First discover what rows, fields, times, entities, events, relationships, units, and outcomes mean. When the request asks why a process behaves as observed, add an evidence-labeled domain knowledge layer rather than stretching structural joins into causal claims. Then compile those meanings into valid analysis and modeling choices.
 
 Keep four evidence classes separate:
 
@@ -25,6 +25,7 @@ Treat language and format as presentation projections of one canonical finding s
 - **Dataset first:** Read `references/dataset-semantic-discovery.md`, inspect the data, and run `scripts/profile_dataset.py`. Use this route when the user provides a table but no ontology.
 - **Ontology first:** Normalize existing metadata with `references/semantic-contract.md`, run `scripts/profile_ontology.py`, and render a diagram when entities or relations need visual inspection.
 - **Ontology views:** Read `references/diagram-routing.md` completely when a diagram is requested or relationships and meaning need visual explanation. Default to `diagram_intent: auto`; honor an explicit structural, semantic-role, process, temporal, analytical, statistical, decision, or relational intent.
+- **Domain knowledge graph:** Read `references/domain-knowledge-ontology.md` completely for explanatory mechanism, candidate-cause, event, risk, verification-action, or goal maps. Complete dataset discovery first when data drives the graph; validate and render the separate domain contract with `scripts/render_domain_ontology.py`.
 - **Analysis or modeling:** Also read `references/problem-routing.md` and `references/analysis-playbook.md` before engineering features or choosing metrics.
 - **Reports or localization:** Read `references/report-integrity.md` completely before writing, translating, or reformatting a substantive analysis report. Build the finding registry before prose, validate an internal annotated report, then publish a separate marker-free report.
 - **Tool selection:** Read `references/open-source-tooling.md`. Verify versions, licenses, and current interfaces from primary sources before procurement or implementation decisions.
@@ -114,7 +115,9 @@ Use `compact` detail for large ontologies and `fields` when field-level roles fi
 
 Complete this step when analysis code can depend on one stable semantic contract rather than source-specific schemas.
 
-## 4. Select and render task views
+## 4. Select and render ontology views
+
+### Task-semantic views
 
 Treat each diagram as a projection of the semantic contract, not as the ontology itself. Keep source-owned entities and relations in the canonical contract; store inferred process groupings, measured associations, analytical lineage, and decision hypotheses in a separate semantic-view JSON artifact.
 
@@ -133,6 +136,31 @@ python scripts/render_semantic_view.py semantic-view.json \
 Every visible node and edge must carry an evidence class. Give observed associations reproducible metric, sample, and scope support. Use arrow direction only for structural, temporal, lineage, process-flow, constraint, or supported causal meaning; label hypotheses and associations `causal: false`.
 
 Complete this step when the selected views answer the stated question, remain traceable to canonical fields, and expose unresolved review items without promoting task-view claims into source truth.
+
+### Domain-knowledge graphs
+
+Keep the structural semantic contract as the source-to-analysis seam. Build a separate domain contract for the explanatory view described in `references/domain-knowledge-ontology.md`.
+
+Separate concepts for measurements, controls, unmeasured actions, mechanisms, process states, events, constraints, risks, data-quality hypotheses, actions, and goals. Preserve source fields on measurement concepts. Record every relationship with `declared`, `observed`, `inferred`, or `proposed` evidence, plus source references and confidence where required.
+
+General domain documents can support an inferred mechanism. They do not declare that the mechanism or equipment boundary applies to the user's installation. Treat temporal precedence and co-movement as observed relationships, not causal proof. Use `may_cause` or `influences` until a plant-specific controlled source or domain owner supports `causes`.
+
+Validate and render the graph:
+
+```bash
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format markdown \
+  --language zh-Hant-TW \
+  --output domain-ontology-review.md
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format svg \
+  --language zh-Hant-TW \
+  --focus event_id \
+  --output domain-ontology.svg
+```
+
+Give the user both the review draft and the rendered graph. Complete this step when every visible node and arrow has an auditable evidence class, unresolved installation-specific questions remain visible, and validation reports no errors.
 
 ## 5. Select the problem mode
 
@@ -195,6 +223,7 @@ Return the applicable artifacts:
 - normalized ontology snapshot and provenance;
 - canonical structural diagram plus task-semantic view specification and Mermaid or DOT output when visual relationships aid review;
 - selected diagram intent, question, evidence scope, claim types, and unresolved view assertions;
+- domain knowledge contract, review Markdown, and SVG or Mermaid graph when explanatory concepts or mechanisms are in scope;
 - unresolved semantic questions and conflicts;
 - problem specification, target/time mode, objectives, constraints, and validation design;
 - EDA findings tied to semantic roles;

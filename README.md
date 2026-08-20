@@ -1,6 +1,6 @@
 # Semantic Ontology ML
 
-An agent skill for using ontology as the semantic control plane for exploratory analysis and machine learning.
+An agent skill for using structural and domain-knowledge ontology as the semantic control plane for exploratory analysis and machine learning.
 
 The skill discovers and validates what rows, fields, entities, events, relationships, units, times, and outcomes mean before compiling those semantics into leakage-safe feature engineering, problem routing, validation, modeling, and evaluation choices.
 
@@ -13,6 +13,8 @@ The skill discovers and validates what rows, fields, entities, events, relations
 - A provider-neutral semantic contract for datasets, entities, fields, relations, time, units, roles, targets, and provenance
 - Automatic routing for structural, semantic-role, process, temporal, analytical, statistical, decision, and relational ontology views
 - Ontology validation and dependency-free Mermaid or Graphviz DOT diagrams with evidence-aware task views
+- Evidence-labeled domain knowledge graphs for controls, mechanisms, process states, measurements, events, risks, data quality, actions, and goals
+- A dependency-free SVG and Mermaid domain graph renderer with an optional focused-node detail panel
 - Routing for target-free exploration, single-target, multi-output, multilabel, multitask, and multi-objective problems
 - Leakage-safe feature lineage, deployment-aware validation, baselines, ablations, and auditable evidence bundles
 - Optional adapter guidance for Palantir Foundry, LinkML, RDF, SQL catalogs, and hand-authored metadata
@@ -25,9 +27,11 @@ agents/openai.yaml
 references/
 scripts/profile_dataset.py
 scripts/profile_ontology.py
+scripts/render_domain_ontology.py
 scripts/render_semantic_view.py
 scripts/validate_report_integrity.py
 tests/test_profile_ontology_diagrams.py
+tests/test_render_domain_ontology.py
 tests/test_render_semantic_view.py
 tests/test_validate_report_integrity.py
 ```
@@ -76,9 +80,33 @@ python scripts/render_semantic_view.py semantic-view.json \
 
 `diagram_intent: auto` is the default. Explicit intents and evidence scopes override automatic routing without changing the canonical semantic contract.
 
-User-facing report prose, diagram titles, labels, legends, annotations, and review items default to Traditional Chinese. Source-native field names, normalized IDs, JSON keys, code, formulas, metric symbols, and units stay unchanged for traceability. Use `--language en` with either diagram renderer only when English output is explicitly requested.
+## Domain knowledge graph
 
-For substantive reports, create a canonical finding registry, add invisible finding markers to each localized Markdown report, and validate coverage and required values:
+Use a separate domain contract when the graph must explain process mechanisms, observed events, candidate causes, operational risks, or verification actions. This keeps structural joins separate from explanatory relationships.
+
+```bash
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format markdown \
+  --language zh-Hant-TW \
+  --output domain-ontology-review.md
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format svg \
+  --language zh-Hant-TW \
+  --focus anomaly_event \
+  --output domain-ontology.svg
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format mermaid \
+  --language zh-Hant-TW \
+  --output domain-ontology.md
+```
+
+The renderer validates concept kinds, references, evidence classes, confidence, plant confirmation, and causal predicates. It rejects non-declared `causes` or `prevents` relationships and keeps observed timing separate from causal proof. See [`references/domain-knowledge-ontology.md`](references/domain-knowledge-ontology.md).
+
+User-facing report prose, diagram titles, labels, legends, annotations, and review items default to Traditional Chinese. Source-native field names, normalized IDs, JSON keys, code, formulas, metric symbols, and units stay unchanged for traceability. Use `--language en` only when English output is explicitly requested.
+
+For substantive reports, create a canonical finding registry, annotate each internal Markdown report, and validate coverage and required values before publishing a clean copy:
 
 ```bash
 python scripts/validate_report_integrity.py finding-registry.json \

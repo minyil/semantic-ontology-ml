@@ -24,6 +24,8 @@ output_language: zh-Hant-TW
 
 Supported intents are `auto`, `structural`, `semantic-role`, `process`, `temporal`, `analytical`, `statistical`, `decision`, and `relational`.
 
+Use the sibling contract in `domain-knowledge-ontology.md` when the question needs explicit mechanisms, candidate causes, events, risks, verification actions, goals, or a focused concept review. Keep the `process` task view for a compact, data-linked projection of process groups; use the domain route for a richer explanatory graph with concept kinds, evidence sources, confidence, and installation-specific confirmation.
+
 Default `output_language` to `zh-Hant-TW`. Localize every user-facing title, label, legend, annotation, support explanation, and review item to Traditional Chinese unless the user explicitly requests another language. Keep normalized field IDs, source-native names, JSON keys, code, formulas, metric symbols, and units stable for traceability.
 
 Supported evidence scopes are:
