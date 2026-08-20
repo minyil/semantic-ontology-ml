@@ -1,4 +1,4 @@
 interface:
   display_name: "Semantic Ontology ML"
-  short_description: "Ontology diagrams and leakage-safe semantic ML"
-  default_prompt: "Use $semantic-ontology-ml to infer dataset semantics, render the ontology graph, and build leakage-safe analyses or models."
+  short_description: "Task and domain ontology views with semantic ML"
+  default_prompt: "使用 $semantic-ontology-ml 推論資料集語意、自動選擇任務或領域知識 ontology 視圖，並建立避免資料洩漏的分析；以繁體中文呈現、保留證據邊界，且只交付不含內部標記的乾淨報告。"

@@ -1,15 +1,20 @@
 # Semantic Ontology ML
 
-An agent skill for using ontology as the semantic control plane for exploratory analysis and machine learning.
+An agent skill for using structural and domain-knowledge ontology as the semantic control plane for exploratory analysis and machine learning.
 
 The skill discovers and validates what rows, fields, entities, events, relationships, units, times, and outcomes mean before compiling those semantics into leakage-safe feature engineering, problem routing, validation, modeling, and evaluation choices.
 
 ## What it provides
 
 - Evidence-labeled semantics: declared, observed, inferred, and proposed
+- Traditional Chinese (`zh-Hant-TW`) user-facing reports and diagrams by default, with explicit language override support
+- Canonical finding registries and report-integrity validation that preserve summary coverage, key values, and semantic warnings across languages
 - Dataset profiling for CSV, TSV, JSON, JSONL/NDJSON, and Parquet
 - A provider-neutral semantic contract for datasets, entities, fields, relations, time, units, roles, targets, and provenance
-- Ontology validation and dependency-free Mermaid or Graphviz DOT diagrams
+- Automatic routing for structural, semantic-role, process, temporal, analytical, statistical, decision, and relational ontology views
+- Ontology validation and dependency-free Mermaid or Graphviz DOT diagrams with evidence-aware task views
+- Evidence-labeled domain knowledge graphs for controls, mechanisms, process states, measurements, events, risks, data quality, actions, and goals
+- A dependency-free SVG and Mermaid domain graph renderer with an optional focused-node detail panel
 - Routing for target-free exploration, single-target, multi-output, multilabel, multitask, and multi-objective problems
 - Leakage-safe feature lineage, deployment-aware validation, baselines, ablations, and auditable evidence bundles
 - Optional adapter guidance for Palantir Foundry, LinkML, RDF, SQL catalogs, and hand-authored metadata
@@ -22,7 +27,13 @@ agents/openai.yaml
 references/
 scripts/profile_dataset.py
 scripts/profile_ontology.py
+scripts/render_domain_ontology.py
+scripts/render_semantic_view.py
+scripts/validate_report_integrity.py
 tests/test_profile_ontology_diagrams.py
+tests/test_render_domain_ontology.py
+tests/test_render_semantic_view.py
+tests/test_validate_report_integrity.py
 ```
 
 Start with [`SKILL.md`](SKILL.md). It routes each request to the relevant reference documents and scripts.
@@ -36,27 +47,74 @@ python scripts/profile_dataset.py data.csv \
   --time-column observed_at \
   --sample-strategy reservoir \
   --sample-seed 17 \
-  --format markdown \
-  --output semantic-profile.md
+  --format json \
+  --output semantic-profile.json
 ```
 
-Omit roles that are not known. The profiler reports candidates instead of silently treating statistical patterns as business truth.
+Omit roles that are not known. The profiler reports candidates instead of silently treating statistical patterns as business truth. Treat profiler JSON as internal evidence, then author the user-facing semantic and EDA reports in the selected language.
 
 ## Ontology profiling and diagrams
 
 ```bash
 python scripts/profile_ontology.py ontology.json \
-  --format markdown \
-  --output ontology-profile.md
+  --format json \
+  --output ontology-profile.json
 
 python scripts/profile_ontology.py ontology.json \
   --format mermaid \
+  --language zh-Hant-TW \
   --diagram-detail fields \
   --diagram-direction LR \
   --output ontology-diagram.md
 ```
 
 The profiler accepts the provider-neutral `entity_types`/`fields`/`relations` shape and legacy `object_types`/`properties`/`link_types` snapshots.
+
+For task-specific views, write a semantic-view JSON using [`references/diagram-routing.md`](references/diagram-routing.md), then render it separately from the canonical ontology:
+
+```bash
+python scripts/render_semantic_view.py semantic-view.json \
+  --format mermaid \
+  --output task-semantic-view.md
+```
+
+`diagram_intent: auto` is the default. Explicit intents and evidence scopes override automatic routing without changing the canonical semantic contract.
+
+## Domain knowledge graph
+
+Use a separate domain contract when the graph must explain process mechanisms, observed events, candidate causes, operational risks, or verification actions. This keeps structural joins separate from explanatory relationships.
+
+```bash
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format markdown \
+  --language zh-Hant-TW \
+  --output domain-ontology-review.md
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format svg \
+  --language zh-Hant-TW \
+  --focus anomaly_event \
+  --output domain-ontology.svg
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format mermaid \
+  --language zh-Hant-TW \
+  --output domain-ontology.md
+```
+
+The renderer validates concept kinds, references, evidence classes, confidence, plant confirmation, and causal predicates. It rejects non-declared `causes` or `prevents` relationships and keeps observed timing separate from causal proof. See [`references/domain-knowledge-ontology.md`](references/domain-knowledge-ontology.md).
+
+User-facing report prose, diagram titles, labels, legends, annotations, and review items default to Traditional Chinese. Source-native field names, normalized IDs, JSON keys, code, formulas, metric symbols, and units stay unchanged for traceability. Use `--language en` only when English output is explicitly requested.
+
+For substantive reports, create a canonical finding registry, annotate each internal Markdown report, and validate coverage and required values before publishing a clean copy:
+
+```bash
+python scripts/validate_report_integrity.py finding-registry.json \
+  report-zh-Hant-TW.annotated.md \
+  --clean-output report-zh-Hant-TW.md
+```
+
+The annotated report and registry are internal audit artifacts. Deliver the clean output so users never see validation markers.
 
 ## Tests
 

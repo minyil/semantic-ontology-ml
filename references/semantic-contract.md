@@ -2,6 +2,8 @@
 
 Use this contract as the seam between source adapters and analysis. Keep source-native identifiers; never turn display names or statistical guesses into source truth.
 
+This contract describes datasets and structural entity relations. For mechanism, process-state, event, risk, or operational-decision graphs, keep this snapshot as the source seam and create the separate contract in [`domain-knowledge-ontology.md`](domain-knowledge-ontology.md).
+
 ## Canonical shape
 
 ```json
@@ -117,3 +119,12 @@ Feature validity is governed by availability time, not merely event time. Record
 - **Palantir:** object types become entity types, properties become fields, link types become relations, and API names/RIDs remain `source_id`; actions/functions stay in adapter-specific operational metadata.
 
 Legacy snapshots using `object_types`/`properties`/`link_types` remain accepted by `scripts/profile_ontology.py`; new snapshots should use `entity_types`/`fields`/`relations`.
+
+## Task-semantic views
+
+Keep the canonical contract stable and source-oriented. Store process groupings, statistical associations, analytical lineage, temporal projections, and decision hypotheses as sibling semantic-view artifacts defined in `diagram-routing.md`.
+
+- Reference canonical entities and fields by normalized name.
+- Keep inferred and proposed edges outside canonical `relations`.
+- Attach metric, sample, and scope support to observed associations.
+- Version or hash each view against the canonical ontology snapshot so a diagram can be reproduced without becoming source truth.
