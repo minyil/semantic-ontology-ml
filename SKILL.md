@@ -1,11 +1,11 @@
 ---
 name: semantic-ontology-ml
-description: Infer and validate dataset semantics, express and visualize them as a provider-neutral ontology, and use that meaning to drive exploratory analysis, leakage-safe feature engineering, model selection, and evaluation. Use for ontology diagrams; CSV, JSON, Parquet, pandas/DataFrame-like, time-series, panel, event, relational, graph, numeric, categorical, boolean, datetime, or text data; no-target exploration, single-target prediction, multi-output or multilabel learning, multitask learning, constrained multi-objective optimization; or Palantir Foundry, LinkML, RDF, SQL catalog, and hand-authored metadata adapters.
+description: Infer and validate dataset semantics, render structural or domain-knowledge ontology graphs, and use that meaning to drive exploratory analysis, leakage-safe feature engineering, model selection, and evaluation. Use for ontology diagrams, process/mechanism maps, anomaly knowledge graphs; CSV, JSON, Parquet, pandas/DataFrame-like, time-series, panel, event, relational, graph, numeric, categorical, boolean, datetime, or text data; no-target exploration, single-target prediction, multi-output or multilabel learning, multitask learning, constrained multi-objective optimization; or Palantir Foundry, LinkML, RDF, SQL catalog, and hand-authored metadata adapters.
 ---
 
 # Semantic Ontology ML
 
-Use ontology as the semantic control plane for analysis. First discover what rows, fields, times, entities, events, relationships, units, and outcomes mean. Then compile those meanings into valid analysis and modeling choices.
+Use ontology as the semantic control plane for analysis. First discover what rows, fields, times, entities, events, relationships, units, and outcomes mean. When the request asks why a process behaves as observed, add an evidence-labeled domain knowledge layer rather than stretching structural joins into causal claims. Then compile those meanings into valid analysis and modeling choices.
 
 Keep four evidence classes separate:
 
@@ -20,6 +20,7 @@ Never promote a candidate target, identifier, timestamp, causal relationship, se
 
 - **Dataset first:** Read `references/dataset-semantic-discovery.md`, inspect the data, and run `scripts/profile_dataset.py`. Use this route when the user provides a table but no ontology.
 - **Ontology first:** Normalize existing metadata with `references/semantic-contract.md`, run `scripts/profile_ontology.py`, and render a diagram when entities or relations need visual inspection.
+- **Domain knowledge graph:** Read `references/domain-knowledge-ontology.md`. Use this route for control-variable, mechanism, process-state, event, risk, constraint, data-quality, action, or goal maps. If data drives the graph, complete dataset discovery first; validate and render the domain contract with `scripts/render_domain_ontology.py`.
 - **Analysis or modeling:** Also read `references/problem-routing.md` and `references/analysis-playbook.md` before engineering features or choosing metrics.
 - **Tool selection:** Read `references/open-source-tooling.md`. Verify versions, licenses, and current interfaces from primary sources before procurement or implementation decisions.
 - **Palantir source:** Also read `references/palantir-integration.md`. Treat it as an input/output adapter, not a core dependency.
@@ -96,7 +97,30 @@ Use `compact` detail for large ontologies and `fields` when field-level roles fi
 
 Complete this step when analysis code can depend on one stable semantic contract rather than source-specific schemas.
 
-## 4. Select the problem mode
+## 4. Synthesize a domain knowledge graph when requested
+
+Keep the structural semantic contract as the source-to-analysis seam. Build a separate domain contract for the explanatory view described in `references/domain-knowledge-ontology.md`.
+
+Separate concepts for measurements, controls, unmeasured actions, mechanisms, process states, events, constraints, risks, data-quality hypotheses, actions, and goals. Preserve source fields on measurement concepts. Record every relationship with `declared`, `observed`, `inferred`, or `proposed` evidence, plus source references and confidence where required.
+
+General domain documents can support an inferred mechanism. They do not declare that the mechanism or equipment boundary applies to the user's installation. Treat temporal precedence and co-movement as observed relationships, not causal proof. Use `may_cause` or `influences` until a plant-specific controlled source or domain owner supports `causes`.
+
+Validate and render the graph:
+
+```bash
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format markdown \
+  --output domain-ontology-review.md
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format svg \
+  --focus event_id \
+  --output domain-ontology.svg
+```
+
+Give the user both the review draft and the rendered graph. Complete this step when every visible node and arrow has an auditable evidence class, unresolved installation-specific questions remain visible, and validation reports no errors.
+
+## 5. Select the problem mode
 
 Classify the request using `references/problem-routing.md`:
 
@@ -115,7 +139,7 @@ For time-indexed data, separately classify cross-sectional snapshots, ordinary t
 
 Complete this step when the learning unit, target mode, time mode, valid split, metrics, and constraints are explicit.
 
-## 5. Compile ontology-guided analysis and features
+## 6. Compile ontology-guided analysis and features
 
 Build a feature lineage table before materializing features. Include source field or relation path, semantic role, transformation, observation window, availability lag, unit, null handling, fit scope, and leakage rationale.
 
@@ -132,7 +156,7 @@ Exclude raw identifiers, post-outcome state, future observations, target proxies
 
 Complete this step when each feature is reproducible from the ontology and valid at scoring time.
 
-## 6. Analyze and model progressively
+## 7. Analyze and model progressively
 
 Follow `references/analysis-playbook.md`:
 
@@ -147,13 +171,14 @@ Match validation to deployment: random only for exchangeable rows; group-aware f
 
 Complete this step when the comparison answers the business question under a deployment-valid split.
 
-## 7. Deliver auditable evidence
+## 8. Deliver auditable evidence
 
 Return the applicable artifacts:
 
 - semantic profile with declared/observed/inferred/proposed labels;
 - normalized ontology snapshot and provenance;
 - Mermaid or DOT ontology diagram when visual relationships aid review;
+- domain knowledge contract, review Markdown, and SVG or Mermaid graph when explanatory concepts or mechanisms are in scope;
 - unresolved semantic questions and conflicts;
 - problem specification, target/time mode, objectives, constraints, and validation design;
 - EDA findings tied to semantic roles;

@@ -1,6 +1,6 @@
 # Semantic Ontology ML
 
-An agent skill for using ontology as the semantic control plane for exploratory analysis and machine learning.
+An agent skill for using structural and domain-knowledge ontology as the semantic control plane for exploratory analysis and machine learning.
 
 The skill discovers and validates what rows, fields, entities, events, relationships, units, times, and outcomes mean before compiling those semantics into leakage-safe feature engineering, problem routing, validation, modeling, and evaluation choices.
 
@@ -10,6 +10,8 @@ The skill discovers and validates what rows, fields, entities, events, relations
 - Dataset profiling for CSV, TSV, JSON, JSONL/NDJSON, and Parquet
 - A provider-neutral semantic contract for datasets, entities, fields, relations, time, units, roles, targets, and provenance
 - Ontology validation and dependency-free Mermaid or Graphviz DOT diagrams
+- Evidence-labeled domain knowledge graphs for controls, mechanisms, process states, measurements, events, risks, data quality, actions, and goals
+- A dependency-free SVG and Mermaid domain graph renderer with an optional focused-node detail panel
 - Routing for target-free exploration, single-target, multi-output, multilabel, multitask, and multi-objective problems
 - Leakage-safe feature lineage, deployment-aware validation, baselines, ablations, and auditable evidence bundles
 - Optional adapter guidance for Palantir Foundry, LinkML, RDF, SQL catalogs, and hand-authored metadata
@@ -22,7 +24,9 @@ agents/openai.yaml
 references/
 scripts/profile_dataset.py
 scripts/profile_ontology.py
+scripts/render_domain_ontology.py
 tests/test_profile_ontology_diagrams.py
+tests/test_render_domain_ontology.py
 ```
 
 Start with [`SKILL.md`](SKILL.md). It routes each request to the relevant reference documents and scripts.
@@ -57,6 +61,27 @@ python scripts/profile_ontology.py ontology.json \
 ```
 
 The profiler accepts the provider-neutral `entity_types`/`fields`/`relations` shape and legacy `object_types`/`properties`/`link_types` snapshots.
+
+## Domain knowledge graph
+
+Use a separate domain contract when the graph must explain process mechanisms, observed events, candidate causes, operational risks, or verification actions. This keeps structural joins separate from explanatory relationships.
+
+```bash
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format markdown \
+  --output domain-ontology-review.md
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format svg \
+  --focus anomaly_event \
+  --output domain-ontology.svg
+
+python scripts/render_domain_ontology.py domain-ontology.json \
+  --format mermaid \
+  --output domain-ontology.md
+```
+
+The renderer validates concept kinds, references, evidence classes, confidence, plant confirmation, and causal predicates. It rejects non-declared `causes` or `prevents` relationships and keeps observed timing separate from causal proof. See [`references/domain-knowledge-ontology.md`](references/domain-knowledge-ontology.md).
 
 ## Tests
 

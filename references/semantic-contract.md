@@ -2,6 +2,8 @@
 
 Use this contract as the seam between source adapters and analysis. Keep source-native identifiers; never turn display names or statistical guesses into source truth.
 
+This contract describes datasets and structural entity relations. For mechanism, process-state, event, risk, or operational-decision graphs, keep this snapshot as the source seam and create the separate contract in [`domain-knowledge-ontology.md`](domain-knowledge-ontology.md).
+
 ## Canonical shape
 
 ```json
